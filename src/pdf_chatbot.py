@@ -39,7 +39,7 @@ def load_emb():
 class PDFChatBot:
     def __init__(self) -> None:
         self.llm = None
-        self.emb_model = None
+        self.embedding = None
         self.vectordb = None
         
 
@@ -71,7 +71,7 @@ class PDFChatBot:
         # no need to persist the database
         self.vectordb = Chroma.from_documents(
             documents=self._docs,
-            embedding=self.emb_model,
+            embedding=self.embedding,
             persist_directory=None
         )
     
@@ -91,6 +91,6 @@ class PDFChatBot:
         # do a final summarization based on sub_summaries
         texts = [ss['summary_text'] for ss in sub_summaries]
         texts = '\n\n'.join(texts)
-        summary = self.llm(texts, max_length=max_length, min_length=min_length, do_sample=False)
+        summary = self.llm(texts, max_length=max_length*2, min_length=min_length*2, do_sample=False)
 
         return summary, src_docs, sub_summaries
