@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;1,300&family=Open+Sans&family=Raleway:ital,wght@0,200;1,200&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&family=Special+Elite&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Open Sans', sans-serif;
@@ -6,12 +6,17 @@ html, body, [class*="css"] {
 }
 
 #title {
-    font-family: 'Montserrat', sans-serif; 
+    font-family: 'Special Elite', sans-serif; 
     font-size: 36px;
     margin-bottom: 0px;
 }
 
 #subtitle {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 28px;
+    font-family: 'Special Elite', sans-serif;
+    font-size: 24px;
+    font-style: italic;
+}
+
+#hfemoji {
+    font-size: 24px;
 }
