@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,200;1,200&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Open Sans', sans-serif;
+}
+
+#title {
+    font-family: 'Raleway', sans-serif; 
+    font-size: 48px;
+    margin-bottom: 0px;
+}
+
+#subtitle {
+    font-family: 'Raleway', sans-serif;
+    font-size: 36px;
+}

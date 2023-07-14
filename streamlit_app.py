@@ -29,11 +29,18 @@ st.set_page_config(
     initial_sidebar_state='auto',
 )
 
+with open( "css/style.css" ) as css:
+    st.markdown( f'<style>{css.read()}</style>' , unsafe_allow_html= True)
+
 if 'chatbot' not in st.session_state:
     st.session_state.chatbot : PDFChatBot = PDFChatBot()
 
-st.header('Research Paper Chat')
-st.subheader('(powered by _local_ LLMs :hugging_face:)')
+# use HTML snippets for title and sub-title in order to apply custom CSS rules
+html_title = '<p id="title">PDF Chat</p>'
+html_subtitle = '<p id="subtitle">(powered by local LLMs 🤗)</p>'
+st.markdown(html_title, unsafe_allow_html=True)
+st.markdown(html_subtitle, unsafe_allow_html=True)
+
 st.divider()
 
 col1, col2 = st.columns([0.6, 0.4])
