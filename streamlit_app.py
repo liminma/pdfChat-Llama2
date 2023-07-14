@@ -55,7 +55,7 @@ def file_updated():
     st.session_state.answer = None
     
 with col1:
-    pdf_file = st.file_uploader('**Upload a research paper (PDF only)**', type='pdf', on_change=file_updated)
+    pdf_file = st.file_uploader('**Upload a file (PDF only)**', type='pdf', on_change=file_updated)
     if pdf_file is None:
         st.stop()
 
