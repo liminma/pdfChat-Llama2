@@ -38,3 +38,36 @@ def highlight_block(src_doc: Document, pdf_bytes: bytes) -> str:
     pdf_base64 = base64.b64encode(pdf_doc).decode('utf-8')
     
     return pdf_base64, page_num
+
+
+def get_pdf_view(pdf_base64, page_num: int = 0) -> str:
+    """create an iframe to embed PDF file
+    
+    Parameters:
+        pdf_base64: PDF file encoded using base64.
+        page_num: the page to dispaly.
+        
+    Return:
+        HTML snippet of iframe
+    """
+    return (f'''
+    <iframe src="data:application/pdf;base64,{pdf_base64}#page={page_num}"
+    width="100%" height="1000px" type="application/pdf" style="min-width:400px;"></iframe>
+    ''')
+
+
+def set_background_image(img_base64):
+    """set a base64 encoded image as page background.
+    Parameters:
+        img_base64: an image encoded in base64.    
+    Return:
+        HTML snippet of background image.
+    """
+    return '''
+    <style>
+      .stApp {
+        background-image: url("data:image/png;base64,%s");
+        background-size: repeat;
+      }
+    </style>
+    ''' % img_base64

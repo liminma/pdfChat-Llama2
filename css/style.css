@@ -2,13 +2,16 @@
 
 html, body, [class*="css"] {
     font-family: 'Open Sans', sans-serif;
-/*     font-size: 16px; */
 }
 
 #title {
     font-family: 'Special Elite', sans-serif; 
     font-size: 36px;
     margin-bottom: 0px;
+}
+
+#subtitle-container {
+    margin-bottom: -3rem;
 }
 
 #subtitle {
@@ -19,4 +22,27 @@ html, body, [class*="css"] {
 
 #hfemoji {
     font-size: 24px;
+}
+
+#MainMenu {
+    visibility: hidden;
+}
+
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 99.8%;
+    color: grey;
+    text-align: right;
+}
+
+.footer > p:nth-child(1) {
+    font-size: 10px;
+}
+
+.footer > p:nth-child(1) > a {
+    color: grey;
+    background-color: transparent;
+    text-decoration: underline;
 }

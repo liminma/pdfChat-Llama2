@@ -3,27 +3,28 @@ import streamlit as st
 
 import src.pdf_chatbot as pdf_chatbot
 from src.pdf_chatbot import PDFChatBot
-from src.utils import highlight_block
+from src.utils import highlight_block, get_pdf_view, set_background_image
 
 
 @st.cache_resource
 def load_llm():
     return pdf_chatbot.load_llm()
 
+
 @st.cache_resource
 def load_embing():
     return pdf_chatbot.load_emb()
 
 
-def get_pdf_view(base64_pdf, page_num: int = 0) -> str:
-    return (f'''
-    <iframe src="data:application/pdf;base64,{base64_pdf}#page={page_num}"
-    width="100%" height="1000px" type="application/pdf" style="min-width:400px;"></iframe>
-    ''')
+@st.cache_resource()
+def base64_encoding(filepath: str) -> str:
+    with open(filepath, 'rb') as f:
+        data = f.read()        
+    return base64.b64encode(data).decode()
 
 
 st.set_page_config(
-    page_title='Research Paper Chat (Local LLM)',
+    page_title='PDF Chat (Local LLM)',
     page_icon='🎓',
     layout='wide',
     initial_sidebar_state='auto',
@@ -32,16 +33,32 @@ st.set_page_config(
 with open( "css/style.css" ) as css:
     st.markdown( f'<style>{css.read()}</style>' , unsafe_allow_html= True)
 
-if 'chatbot' not in st.session_state:
-    st.session_state.chatbot : PDFChatBot = PDFChatBot()
+html_background =  set_background_image(
+    base64_encoding('assets/background.png')
+)
+st.markdown(html_background, unsafe_allow_html=True)
 
+footer="""
+<div class="footer">
+  <p>background photo by
+     <a href="https://unsplash.com/@olga_o?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Olga Thelavart</a> 
+     on
+     <a href="https://unsplash.com/photos/HZm2XR0whdw?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
+  </p>
+</div>
+"""
+st.markdown(footer, unsafe_allow_html=True)
+    
 # use HTML snippets for title and sub-title in order to apply custom CSS rules
 html_title = '<p id="title">PDF Chat</p>'
-html_subtitle = '<span id="subtitle">powered by local LLMs </span><span id="hfemoji">🤗</span>'
+html_subtitle = '<div id="subtitle-container"><span id="subtitle">powered by local LLMs </span><span id="hfemoji">🤗</span></div>'
 st.markdown(html_title, unsafe_allow_html=True)
 st.markdown(html_subtitle, unsafe_allow_html=True)
 
 st.divider()
+
+if 'chatbot' not in st.session_state:
+    st.session_state.chatbot : PDFChatBot = PDFChatBot()
 
 col1, col2 = st.columns([0.6, 0.4])
 
@@ -77,7 +94,6 @@ with col1:
 
 with col2:
     question = st.text_input('Question:', '')
-
     if st.button('Answer'):
         try:
             answer, src_docs, _ = st.session_state.chatbot.mmr_search(question)
