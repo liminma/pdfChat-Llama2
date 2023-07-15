@@ -12,22 +12,30 @@ def load_llm():
 
 
 @st.cache_resource
-def load_embing():
+def load_embedding():
     return pdf_chatbot.load_emb()
 
 
 @st.cache_resource()
 def base64_encoding(filepath: str) -> str:
     with open(filepath, 'rb') as f:
-        data = f.read()        
+        data = f.read()
     return base64.b64encode(data).decode()
+
+
+def reset_session_state() -> None:
+    """reset st.session_state"""
+    st.session_state.file_not_processed = True
+    st.session_state.pdf_bytes = None
+    st.session_state.pdf_base64 = None
+    st.session_state.src_docs = None
+    st.session_state.answer = None
 
 
 st.set_page_config(
     page_title='PDF Chat (Local LLM)',
-    page_icon='🎓',
-    layout='wide',
-    initial_sidebar_state='auto',
+    page_icon='📝',
+    layout='wide'
 )
 
 with open( "css/style.css" ) as css:
@@ -38,59 +46,51 @@ html_background =  set_background_image(
 )
 st.markdown(html_background, unsafe_allow_html=True)
 
+# use HTML snippets for title and sub-title in order to apply custom CSS rules
+html_title = '<p id="title">PDF Chat</p>'
+html_subtitle = '<div id="subtitle-container"><span id="subtitle">powered by local LLMs </span><span id="hfemoji">🤗</span></div>'
+st.markdown(html_title, unsafe_allow_html=True)
+st.markdown(html_subtitle, unsafe_allow_html=True)
+st.divider()
+
 footer="""
 <div class="footer">
   <p>background photo by
-     <a href="https://unsplash.com/@olga_o?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Olga Thelavart</a> 
+     <a href="https://unsplash.com/@olga_o?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Olga Thelavart</a>
      on
      <a href="https://unsplash.com/photos/HZm2XR0whdw?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
   </p>
 </div>
 """
 st.markdown(footer, unsafe_allow_html=True)
-    
-# use HTML snippets for title and sub-title in order to apply custom CSS rules
-html_title = '<p id="title">PDF Chat</p>'
-html_subtitle = '<div id="subtitle-container"><span id="subtitle">powered by local LLMs </span><span id="hfemoji">🤗</span></div>'
-st.markdown(html_title, unsafe_allow_html=True)
-st.markdown(html_subtitle, unsafe_allow_html=True)
 
-st.divider()
+col1, col2 = st.columns([0.6, 0.4])
 
 if 'chatbot' not in st.session_state:
     st.session_state.chatbot : PDFChatBot = PDFChatBot()
 
-col1, col2 = st.columns([0.6, 0.4])
+if 'file_not_processed' not in st.session_state:
+    st.session_state.file_not_processed = True
 
-if 'file_updated' not in st.session_state:
-    st.session_state.file_updated = True
-    
-def file_updated():
-    st.session_state.file_updated = True
-    st.session_state.pdf_bytes = None
-    st.session_state.src_docs = None
-    st.session_state.answer = None
-    
 with col1:
-    pdf_file = st.file_uploader('**Upload a file (PDF only)**', type='pdf', on_change=file_updated)
+    pdf_file = st.file_uploader('**Upload a file (PDF only)**', type='pdf', on_change=reset_session_state)
     if pdf_file is None:
         st.stop()
 
-    pdf_placeholder = st.empty()
-        
-    if st.session_state.file_updated:
+    if st.session_state.file_not_processed:
         with st.spinner(text=f'processing {pdf_file.name} ...'):
             st.session_state.pdf_bytes = pdf_file.read()
-            docs = pdf_chatbot.split_pdf_blocks(st.session_state.pdf_bytes, filename=pdf_file.name)
+            st.session_state.pdf_base64 = base64.b64encode(st.session_state.pdf_bytes).decode('utf-8')
 
-            st.session_state.chatbot.embedding = load_embing()
+            docs = pdf_chatbot.split_pdf_blocks(st.session_state.pdf_bytes, filename=pdf_file.name)
+            st.session_state.chatbot.embedding = load_embedding()
             st.session_state.chatbot.llm = load_llm()
             st.session_state.chatbot.load_vectordb(docs)
-        st.session_state.file_updated = False
 
-    base64_pdf = base64.b64encode(st.session_state.pdf_bytes).decode('utf-8')
-    pdf_view = get_pdf_view(base64_pdf)
-    pdf_placeholder.markdown(pdf_view, unsafe_allow_html=True)
+        st.session_state.file_not_processed = False
+
+    pdf_placeholder = st.empty()
+    pdf_placeholder.markdown(get_pdf_view(st.session_state.pdf_base64), unsafe_allow_html=True)
 
 with col2:
     question = st.text_input('Question:', '')
@@ -101,10 +101,10 @@ with col2:
             st.session_state.answer = f'{answer[0]["summary_text"]}'
         except Exception as ex:
             st.error(f'Errors: {str(ex)}')
-    
+
     if st.session_state.answer:
         st.write(st.session_state.answer)
-    
+
     if st.session_state.src_docs is not None:
         nested_cols = st.columns(len(st.session_state.src_docs))
 

@@ -6,18 +6,18 @@ from langchain.schema.document import Document
 
 def highlight_block(src_doc: Document, pdf_bytes: bytes) -> str:
     """Highlight a block (paragraph) in a PDF page
-    
+
     Parameters:
         src_doc: a LangChain document containing metadata of the block.
         pdf_bytes: the PDF file in bytes.
-        
+
     Return:
         pdf_base64: the modified PDF file with highlighted block in base64.
         page_num: the page containing the block.
     """
     # the page number containing the block
     page_num = src_doc.metadata['page']
-    
+
     # get the bounding box of the block to be highlighted
     bbox = list(map(float, src_doc.metadata['bbox'].split(',')))
     bbox = fitz.fitz.Rect(bbox)
@@ -36,17 +36,17 @@ def highlight_block(src_doc: Document, pdf_bytes: bytes) -> str:
         encryption=fitz.PDF_ENCRYPT_KEEP
     )
     pdf_base64 = base64.b64encode(pdf_doc).decode('utf-8')
-    
+
     return pdf_base64, page_num
 
 
-def get_pdf_view(pdf_base64, page_num: int = 0) -> str:
+def get_pdf_view(pdf_base64: str, page_num: int = 0) -> str:
     """create an iframe to embed PDF file
-    
+
     Parameters:
         pdf_base64: PDF file encoded using base64.
         page_num: the page to dispaly.
-        
+
     Return:
         HTML snippet of iframe
     """
@@ -56,10 +56,10 @@ def get_pdf_view(pdf_base64, page_num: int = 0) -> str:
     ''')
 
 
-def set_background_image(img_base64):
+def set_background_image(img_base64: str) -> str:
     """set a base64 encoded image as page background.
     Parameters:
-        img_base64: an image encoded in base64.    
+        img_base64: an image encoded in base64.
     Return:
         HTML snippet of background image.
     """
