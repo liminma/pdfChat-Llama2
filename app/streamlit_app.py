@@ -82,7 +82,7 @@ with col1:
             st.session_state.pdf_bytes = pdf_file.read()
             st.session_state.pdf_base64 = base64.b64encode(st.session_state.pdf_bytes).decode('utf-8')
 
-            docs = pdf_chatbot.split_pdf_blocks(st.session_state.pdf_bytes, filename=pdf_file.name)
+            docs = pdf_chatbot.split_pdf_blocks(st.session_state.pdf_bytes, filename=pdf_file.name, min_length=50)
             st.session_state.chatbot.embedding = load_embedding()
             st.session_state.chatbot.llm = load_llm()
             st.session_state.chatbot.load_vectordb(docs)

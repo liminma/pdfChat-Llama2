@@ -53,7 +53,7 @@ def split_pdf_blocks(pdf_bytes: bytes, filename: str = None, min_length: int = 1
         blocks = page.get_text('blocks')
         for block in blocks:
             page_content = block[4]
-            if len(page_content) < 10:
+            if len(page_content) < min_length:
                 continue
 
             metadata = {
