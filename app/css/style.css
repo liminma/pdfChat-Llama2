@@ -7,11 +7,11 @@ html, body, [class*="css"] {
 #title {
     font-family: 'Special Elite', sans-serif; 
     font-size: 36px;
-    margin-bottom: 0px;
+    margin: -4rem 0 0;
 }
 
 #subtitle-container {
-    margin-bottom: -3rem;
+    margin: -2rem 0 -3rem;
 }
 
 #subtitle {
