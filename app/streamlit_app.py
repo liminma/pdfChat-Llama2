@@ -38,11 +38,11 @@ st.set_page_config(
     layout='wide'
 )
 
-with open( "css/style.css" ) as css:
+with open( "app/css/style.css" ) as css:
     st.markdown( f'<style>{css.read()}</style>' , unsafe_allow_html= True)
 
 html_background =  set_background_image(
-    base64_encoding('assets/background.png')
+    base64_encoding('app/assets/background.png')
 )
 st.markdown(html_background, unsafe_allow_html=True)
 
@@ -82,9 +82,14 @@ with col1:
             st.session_state.pdf_bytes = pdf_file.read()
             st.session_state.pdf_base64 = base64.b64encode(st.session_state.pdf_bytes).decode('utf-8')
 
-            docs = pdf_chatbot.split_pdf_blocks(st.session_state.pdf_bytes, filename=pdf_file.name, min_length=50)
+            docs = pdf_chatbot.split_pdf_blocks(st.session_state.pdf_bytes, filename=pdf_file.name, min_length=100)
             st.session_state.chatbot.embedding = load_embedding()
-            st.session_state.chatbot.llm = load_llm()
+            
+            llm, prompt, prompt_ending_words = load_llm()
+            st.session_state.chatbot.llm = llm
+            st.session_state.chatbot.prompt = prompt
+            st.session_state.chatbot.prompt_ending_words = prompt_ending_words
+            
             st.session_state.chatbot.load_vectordb(docs)
 
         st.session_state.file_not_processed = False
@@ -96,9 +101,10 @@ with col2:
     question = st.text_input('Question:', '')
     if st.button('Answer'):
         try:
-            answer, src_docs, _ = st.session_state.chatbot.mmr_search(question)
+            # answer, src_docs, _ = st.session_state.chatbot.mmr_search(question)
+            answer, src_docs = st.session_state.chatbot.mmr_search(question)
             st.session_state.src_docs = src_docs
-            st.session_state.answer = f'{answer[0]["summary_text"]}'
+            st.session_state.answer = answer #f'{answer[0]["summary_text"]}'
         except Exception as ex:
             st.error(f'Errors: {str(ex)}')
 

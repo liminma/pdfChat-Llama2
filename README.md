@@ -1,7 +1,7 @@
 # PDF Chat (Local LLM 🤗)
 
 This is a quick demo of showing how to create an LLM-powered PDF Q&A application using LangChain and open-source LLMs.
-It uses [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2) for embedding, and [bart-large-cnn](https://huggingface.co/facebook/bart-large-cnn) for text summarization.
+It uses [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2) for embedding, and [Meta Llama-2-7b-chat](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf) for text summarization.
 
 &nbsp;
 

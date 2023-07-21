@@ -2,24 +2,41 @@ import fitz
 
 import torch
 from transformers import pipeline
+from transformers import GenerationConfig
 
+from langchain import PromptTemplate
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.schema.document import Document
 
+from .prompts import llama2_template, llama2_prompt_ending_words
 
-# hard code the names of embedding model and summarization model.
+
+# hard code the names of models.
 # they are good enough for this demo application.
 DEFAULT_EMBED_MODEL = 'sentence-transformers/all-mpnet-base-v2'
-DEFAULT_MODEL = 'facebook/bart-large-cnn'
+DEFAULT_MODEL = 'meta-llama/Llama-2-7b-chat-hf'
 
 
-def load_llm() -> pipeline:
+def load_llm() -> (pipeline, str):
     """
-    load the summarization model using the HuggingFace pipeline,
-    use GPU if possible
+    load the model using the HuggingFace pipeline, use GPU if possible.
     """
-    return pipeline(task="summarization", model=DEFAULT_MODEL, device_map='auto')
+    gen_config = GenerationConfig.from_pretrained(DEFAULT_MODEL)
+    gen_config.max_new_tokens = 1000
+    
+    llm = pipeline(
+        task="text-generation",
+        model=DEFAULT_MODEL,
+        torch_dtype=torch.float16,
+        generation_config=gen_config,
+        device_map='auto',
+    )
+    
+    # load the corresponding prompt template
+    llama2_prompt = PromptTemplate.from_template(llama2_template)
+    
+    return llm, llama2_prompt, llama2_prompt_ending_words
 
 
 def load_emb() -> HuggingFaceEmbeddings:
@@ -69,8 +86,10 @@ def split_pdf_blocks(pdf_bytes: bytes, filename: str = None, min_length: int = 1
 
 class PDFChatBot:
     def __init__(self) -> None:
-        self.llm = None
         self.embedding = None
+        self.llm = None
+        self.prompt =None
+        self.prompt_ending_words = None
         self.vectordb = None
 
 
@@ -114,13 +133,17 @@ class PDFChatBot:
         # retrieve relevant chunks from the vector database
         src_docs = self.vectordb.max_marginal_relevance_search(query, k=k, fetch_k=fetch_k)
 
-        # summarize each chunk
+        # construct context
         texts = [doc.page_content for doc in src_docs]
-        sub_summaries = self.llm(texts, max_length=max_length, min_length=min_length, do_sample=False)
-
-        # do a final summarization based on sub_summaries
-        texts = [ss['summary_text'] for ss in sub_summaries]
-        texts = '\n\n'.join(texts)
-        summary = self.llm(texts, max_length=max_length*2, min_length=min_length*2, do_sample=False)
-
-        return summary, src_docs, sub_summaries
+        ctx = '\n\n'.join(texts)
+        
+        seqs = self.llm(
+            self.prompt.format(context=ctx, question=query),
+            do_sample=True,        
+            num_return_sequences=1,
+        )
+        answer = seqs[0]['generated_text']
+        idx_start = answer.index(self.prompt_ending_words) + len(self.prompt_ending_words)
+        answer = answer[idx_start:].strip()
+        
+        return answer, src_docs
