@@ -33,7 +33,7 @@ def reset_session_state() -> None:
 
 
 st.set_page_config(
-    page_title='PDF Chat (Local LLM)',
+    page_title='PDF Chat (Llama 2)',
     page_icon='📝',
     layout='wide'
 )
@@ -48,7 +48,7 @@ st.markdown(html_background, unsafe_allow_html=True)
 
 # use HTML snippets for title and sub-title in order to apply custom CSS rules
 html_title = '<p id="title">PDF Chat</p>'
-html_subtitle = '<div id="subtitle-container"><span id="subtitle">powered by local LLMs </span><span id="hfemoji">🤗</span></div>'
+html_subtitle = '<div id="subtitle-container"><span id="subtitle">powered by Llama 2 </span><span id="hfemoji">🤗</span></div>'
 st.markdown(html_title, unsafe_allow_html=True)
 st.markdown(html_subtitle, unsafe_allow_html=True)
 st.divider()
@@ -82,7 +82,7 @@ with col1:
             st.session_state.pdf_bytes = pdf_file.read()
             st.session_state.pdf_base64 = base64.b64encode(st.session_state.pdf_bytes).decode('utf-8')
 
-            docs = pdf_chatbot.split_pdf_blocks(st.session_state.pdf_bytes, filename=pdf_file.name, min_length=100)
+            docs = pdf_chatbot.split_pdf(st.session_state.pdf_bytes, filename=pdf_file.name)
             st.session_state.chatbot.embedding = load_embedding()
             
             llm, prompt, prompt_ending_words = load_llm()
@@ -101,10 +101,9 @@ with col2:
     question = st.text_input('Question:', '')
     if st.button('Answer'):
         try:
-            # answer, src_docs, _ = st.session_state.chatbot.mmr_search(question)
-            answer, src_docs = st.session_state.chatbot.mmr_search(question)
+            answer, src_docs = st.session_state.chatbot.search(question)
             st.session_state.src_docs = src_docs
-            st.session_state.answer = answer #f'{answer[0]["summary_text"]}'
+            st.session_state.answer = answer
         except Exception as ex:
             st.error(f'Errors: {str(ex)}')
 

@@ -15,21 +15,29 @@ def highlight_block(src_doc: Document, pdf_bytes: bytes) -> str:
         pdf_base64: the modified PDF file with highlighted block in base64.
         page_num: the page containing the block.
     """
-    # the page number containing the block
+    # the page number containing the first block
     page_num = src_doc.metadata['page']
 
-    # get the bounding box of the block to be highlighted
-    bbox = list(map(float, src_doc.metadata['bbox'].split(',')))
-    bbox = fitz.fitz.Rect(bbox)
-
     pdf_doc = fitz.open("pdf", pdf_bytes)
-    # get the page containing the block
-    page = pdf_doc[page_num]
-    # highlight the block using the bounding box
-    hl = page.add_highlight_annot(bbox)
-    hl.update()
 
-    # convert using base64 encoding
+    # get the bounding boxes of the blocks to be highlighted
+    bboxes = src_doc.metadata['bbox'].split('\n')
+    for bbox in bboxes:
+        # the first number is the page number, the rest is the bbox coordinates.
+        pp, bbox = bbox.split(',', 1)
+
+        # create the bounding box
+        bbox = list(map(float, bbox.split(',')))
+        bbox = fitz.fitz.Rect(bbox)
+
+        # get the page containing the current block
+        page = pdf_doc[int(pp)]
+
+        # highlight the block using the bounding box
+        hl = page.add_highlight_annot(bbox)
+        hl.update()
+
+    # convert to base64 encoding
     pdf_doc = pdf_doc.tobytes(
         deflate=True,
         clean=True,

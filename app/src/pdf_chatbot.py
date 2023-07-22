@@ -12,18 +12,18 @@ from langchain.schema.document import Document
 from .prompts import llama2_template, llama2_prompt_ending_words
 
 
-# hard code the names of models.
-# they are good enough for this demo application.
+# hard code the model names for the demo application.
 DEFAULT_EMBED_MODEL = 'sentence-transformers/all-mpnet-base-v2'
 DEFAULT_MODEL = 'meta-llama/Llama-2-7b-chat-hf'
 
 
-def load_llm() -> (pipeline, str):
+def load_llm() -> (pipeline, PromptTemplate, str):
     """
-    load the model using the HuggingFace pipeline, use GPU if possible.
+    load the model using the transformers pipeline.
     """
     gen_config = GenerationConfig.from_pretrained(DEFAULT_MODEL)
-    gen_config.max_new_tokens = 1000
+    gen_config.max_new_tokens = 4096
+    gen_config.temperature = 1e-5
     
     llm = pipeline(
         task="text-generation",
@@ -41,44 +41,61 @@ def load_llm() -> (pipeline, str):
 
 def load_emb() -> HuggingFaceEmbeddings:
     """
-    load the embedding model,
-    use GPU if possible
+    load the embedding model.
     """
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    return HuggingFaceEmbeddings(
-        model_name=DEFAULT_EMBED_MODEL,
-        model_kwargs={'device': device}
-    )
+
+    return HuggingFaceEmbeddings(model_name=DEFAULT_EMBED_MODEL,
+                                 model_kwargs={'device': device}
+                                )
 
 
-def split_pdf_blocks(pdf_bytes: bytes, filename: str = None, min_length: int = 10) -> list[Document]:
-    """Split a PDF file into a list of blocks. Each block's meta data
-    contain its page number and bounding box of the block.
+def split_pdf(pdf_bytes: bytes, filename: str = None, min_chunk_length: int = 1000) -> list[Document]:
+    """Split a PDF file into chunks. Each chunk consists of one or more PDF blocks. Chunk's meta data
+    contain the starting page number and each block's page number and bounding box.
 
     Parameters:
         pdf_bytes: the pdf file in bytes.
         filename: the name of the uploaded file.
-        min_length: the min length of a block to keep, default to 10 chars.
+        min_chunk_length: the min length of a chunk, default to 1000 chars.
 
     Return:
         a list of `langchain.schema.document.Document`.
     """
-    pdf_doc = fitz.open("pdf", pdf_bytes)
-
     documents = []
+
+    pdf_doc = fitz.open("pdf", pdf_bytes)
     for i, page in enumerate(pdf_doc):
         blocks = page.get_text('blocks')
+
+        chunk_buffer = {}
         for block in blocks:
             page_content = block[4]
-            if len(page_content) < min_length:
-                continue
-
             metadata = {
                 'source': filename if filename else 'dummy name', # not used in the current impl.
                 'page': i,
-                'bbox': ','.join(map(str, block[:4])), # langChain only allows str, int or float for meta data values
+                'bbox': ','.join(map(str, [i] + list(block[:4]))), # langChain only allows str, int or float for meta data values
             }
-            document = Document(page_content=page_content, metadata=metadata)
+
+            if chunk_buffer.get('page_content'):
+                chunk_buffer['page_content'] = '\n\n'.join([chunk_buffer['page_content'], page_content])
+                chunk_buffer['metadata']['bbox'] = '\n'.join(
+                    [chunk_buffer['metadata']['bbox'], metadata['bbox']]
+                )
+            else:
+                chunk_buffer['page_content'] = page_content
+                chunk_buffer['metadata'] = metadata
+
+            # create a document once the chunk is longer enough.
+            if len(chunk_buffer['page_content']) >= min_chunk_length:
+                document = Document(page_content=chunk_buffer['page_content'],
+                                    metadata=chunk_buffer['metadata'])
+                documents.append(document)
+                chunk_buffer = {}
+
+        # convert the remaining in the chunk buffer to a document
+        if chunk_buffer.get('page_content'):
+            document = Document(page_content=chunk_buffer['page_content'], metadata=chunk_buffer['metadata'])
             documents.append(document)
 
     return documents
@@ -110,30 +127,21 @@ class PDFChatBot:
         )
 
 
-    def mmr_search(self,
-                   query: str,
-                   k: int = 5,
-                   fetch_k: int = 7,
-                   max_length: int = 130,
-                   min_length: int = 30) -> (list[dict], list[Document], list[dict]):
-        """This method uses maximal marginal relevance (mmr) to search the vector database,
-        then summarizes each chunk, and finally summarizes the summaries of all chunks from
-        the previous step.
+    def search(self, query: str, k: int = 5) -> (str, list[Document]):
+        """This method searches the vector database and concats search results as context. The
+        context and query are sent to LLM to get answer.
 
         Parameters:
             query: input question.
             k: the number of returned documents (default to 5).
-            fetch_k: the number of documents to fetch to pass to MMR algorithm (default to 7).
-            max_length: max length to pass to model.
-            min_length: min length to pass to model.
 
         Return:
             a tuple of summary, found relevant documents, summaries for each document.
         """
         # retrieve relevant chunks from the vector database
-        src_docs = self.vectordb.max_marginal_relevance_search(query, k=k, fetch_k=fetch_k)
+        src_docs = self.vectordb.similarity_search(query, k=k)
 
-        # construct context
+        # concatenate chunks together to be used as context
         texts = [doc.page_content for doc in src_docs]
         ctx = '\n\n'.join(texts)
         
@@ -143,6 +151,8 @@ class PDFChatBot:
             num_return_sequences=1,
         )
         answer = seqs[0]['generated_text']
+
+        # need to remove the prompt from the generated text
         idx_start = answer.index(self.prompt_ending_words) + len(self.prompt_ending_words)
         answer = answer[idx_start:].strip()
         
