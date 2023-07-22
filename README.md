@@ -1,7 +1,7 @@
-# PDF Chat (Local LLM 🤗)
+# PDF Chat (Llama 2 🤗)
 
-This is a quick demo of showing how to create an LLM-powered PDF Q&A application using LangChain and open-source LLMs.
-It uses [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2) for embedding, and [Meta Llama-2-7b-chat](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf) for text summarization.
+This is a quick demo of showing how to create an LLM-powered PDF Q&A application using LangChain and Meta Llama 2.
+It uses [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2) for embedding, and [Meta Llama-2-7b-chat](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf) for question answering.
 
 &nbsp;
 
@@ -12,12 +12,11 @@ It uses [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpn
 ## Implementaion
 - PDF ingestion and chunking.
   - use `PyMuPDF` to extract texts from PDF file.
-  - chunking is done based on the unit of paragraph.
-    - filter out paragraphs with length shorter than certain number of characters (default to 10 chars).
-    - metadata: page number and bounding box of the paragraph.
-      - use bounding box to highlight the paragraph.
+  - Each chunk consists of one or more PDF blocks. The default minimum chunk length is 1000 chars.
+  - metadata: starting page number and the bounding boxes of the contained blocks.
+    - use bounding box to highlight a block.
 - use Chroma as the embedding database.
-- similarity search results are passed to LLM for summarization.
+- similarity search results (chunks) are passed to LLM as context for answering a user question.
 
 ## How to run
 To build a Docker image:
