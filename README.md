@@ -5,15 +5,16 @@ It uses [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpn
 
 &nbsp;
 
-[demo.webm](https://github.com/liminma/pdfChat/assets/47096483/2b1e5942-4bec-47a2-90a0-7fa75163cb1f)
+[demo.webm](https://github.com/liminma/pdfChat-Llama2/assets/47096483/3222a924-be6a-4b9b-b7f9-328a78853b63)
 
 &nbsp;
 
 ## Implementaion
 - PDF ingestion and chunking.
-  - use `PyMuPDF` to extract texts from PDF file.
-  - Each chunk consists of one or more PDF blocks. The default minimum chunk length is 1000 chars.
-  - metadata: starting page number and the bounding boxes of the contained blocks.
+  - use `PyMuPDF` to extract texts (blocks) from PDF file.
+  - Each chunk
+    - consists of one or more PDF blocks. The default minimum chunk length is 1000 chars.
+    - metadata contains starting page number and the bounding boxes of the contained blocks.
     - use bounding box to highlight a block.
 - use Chroma as the embedding database.
 - similarity search results (chunks) are passed to LLM as context for answering a user question.
