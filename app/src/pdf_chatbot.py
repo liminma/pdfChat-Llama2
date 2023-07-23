@@ -9,7 +9,7 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.schema.document import Document
 
-from .prompts import llama2_template, llama2_prompt_ending_words
+from .llama2_prompts import llama2_template, llama2_prompt_ending_words
 
 
 # hard code the model names for the demo application.
