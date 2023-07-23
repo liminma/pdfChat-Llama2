@@ -5,7 +5,7 @@ It uses [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpn
 
 &nbsp;
 
-[demo.webm](https://github.com/liminma/pdfChat-Llama2/assets/47096483/3222a924-be6a-4b9b-b7f9-328a78853b63)
+[demo.webm](https://github.com/liminma/pdfChat-Llama2/assets/47096483/82259ad4-2b7a-4f27-9603-1ea98b132226)
 
 &nbsp;
 
