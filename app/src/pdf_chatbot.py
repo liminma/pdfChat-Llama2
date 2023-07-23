@@ -62,13 +62,13 @@ def split_pdf(pdf_bytes: bytes, filename: str = None, min_chunk_length: int = 10
     Return:
         a list of `langchain.schema.document.Document`.
     """
+    pdf_doc = fitz.open("pdf", pdf_bytes)
     documents = []
 
-    pdf_doc = fitz.open("pdf", pdf_bytes)
+    chunk_buffer = {}
     for i, page in enumerate(pdf_doc):
         blocks = page.get_text('blocks')
 
-        chunk_buffer = {}
         for block in blocks:
             page_content = block[4]
             metadata = {
