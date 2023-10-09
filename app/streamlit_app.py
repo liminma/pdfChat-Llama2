@@ -38,11 +38,11 @@ st.set_page_config(
     layout='wide'
 )
 
-with open( "app/css/style.css" ) as css:
+with open( "css/style.css" ) as css:
     st.markdown( f'<style>{css.read()}</style>' , unsafe_allow_html= True)
 
 html_background =  set_background_image(
-    base64_encoding('app/assets/background.png')
+    base64_encoding('assets/background.png')
 )
 st.markdown(html_background, unsafe_allow_html=True)
 
@@ -84,12 +84,12 @@ with col1:
 
             docs = pdf_chatbot.split_pdf(st.session_state.pdf_bytes, filename=pdf_file.name)
             st.session_state.chatbot.embedding = load_embedding()
-            
+
             llm, prompt, prompt_ending_words = load_llm()
             st.session_state.chatbot.llm = llm
             st.session_state.chatbot.prompt = prompt
             st.session_state.chatbot.prompt_ending_words = prompt_ending_words
-            
+
             st.session_state.chatbot.load_vectordb(docs)
 
         st.session_state.file_not_processed = False
