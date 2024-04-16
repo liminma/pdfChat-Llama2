@@ -3,5 +3,5 @@ chromadb==0.3.29
 PyMuPDF==1.22.5
 sentence-transformers==2.2.2
 streamlit~>1.30.0
-transformers==4.36.0
+transformers==4.38.0
 langchain
